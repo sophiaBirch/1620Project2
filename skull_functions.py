@@ -1,3 +1,8 @@
+'''
+    Functionality for the skull jar
+    Sophia Birch
+    11/29/2023
+'''
 import time
 import RPi.GPIO as GPIO
 import pygame
