@@ -3,50 +3,24 @@
     Sophia Birch
     11/29/2023
 '''
+
 import time
-import RPi.GPIO as GPIO
-import pygame
 import random
-import pyaudio
 import numpy as np
+import RPi.GPIO as GPIO
 
-from threading import Timer
-
-from os import listdir
-from os.path import isfile, join
-
-# initalize timestamp to epoch, used to only play one voice line at once
-DONT_GO_UNTIL = 0
-
-# pin defs
+# Constants
+DB_LIMIT = 75
 eye_1 = 12
 eye_2 = 16
 
-# decibel lower limit for activation
-DB_LIMIT = 75
+def init_skull_GPIO():
+    # use gpio pin numbering
+    GPIO.setmode(GPIO.BCM)
 
-# use gpio pin numbering
-GPIO.setmode(GPIO.BCM)
-
-# set pins as output
-GPIO.setup(eye_1, GPIO.OUT)
-GPIO.setup(eye_2, GPIO.OUT)
-
-# init pygame mixer
-pygame.mixer.init()
-
-# sound clips. will eventually be an array of skeletor voicelines
-audio_dir = "./audio/"
-soundfiles = [f for f in listdir(audio_dir) if isfile(join(audio_dir, f))] # https://stackoverflow.com/a/3207973
-sound_array = [pygame.mixer.Sound(audio_dir + file) for file in soundfiles if file.endswith(".wav")]
-
-# pyaudio constants
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 44100
-CHUNK = 512
-py_audio = pyaudio.PyAudio()
-STREAM = py_audio.open(format = FORMAT, channels = CHANNELS, rate = RATE, input = True, frames_per_buffer = CHUNK)
+    # set pins as output
+    GPIO.setup(eye_1, GPIO.OUT)
+    GPIO.setup(eye_2, GPIO.OUT)
 
 def activate_LED(duration) -> None:
     '''
@@ -63,25 +37,6 @@ def activate_LED(duration) -> None:
     GPIO.output(eye_1, GPIO.LOW)
     GPIO.output(eye_2, GPIO.LOW)
     return
-
-
-def play_audio(audio) -> None:
-    '''
-        Plays audio clip and activates the eyes.
-    '''
-    audio.play()
-
-    r = Timer(0.1, activate_LED, (audio.get_length(),))
-    # activate_LED(audio.get_length())
-    r.start()
-
-    # prevents activation of audio until current audio has finished playing
-    global DONT_GO_UNTIL
-    DONT_GO_UNTIL = time.time() + audio.get_length() + 0.5
-    print("I won't go again until", DONT_GO_UNTIL, "and right now its", time.time())
-
-    return
-
 
 def randomize_audio(array):
     '''
@@ -111,4 +66,3 @@ def detect_vibes(data) -> bool:
         print(db)
     
     return db > DB_LIMIT
-
